@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mi PAU 2026 · Murcia</title>
+  <meta name="theme-color" content="#7c3aed" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>" />
+</head>
+<body>
+
+  <!-- ========================== ONBOARDING ========================== -->
+  <section id="onboarding" class="onboarding hidden">
+    <div class="onboarding-card">
+      <h1>📚 Mi PAU 2026</h1>
+      <p class="lead">¡Hola! Vamos a configurar tu plan de estudio para la PAU de la Región de Murcia.</p>
+
+      <label>Tu nombre
+        <input type="text" id="ob-nombre" placeholder="Ej. Carmen" />
+      </label>
+
+      <label>Modalidad de Bachillerato
+        <select id="ob-modalidad">
+          <option value="ciencias">Ciencias y Tecnología</option>
+          <option value="sociales">Ciencias Sociales</option>
+          <option value="humanidades">Humanidades</option>
+          <option value="artes">Artes</option>
+          <option value="general">General</option>
+        </select>
+      </label>
+
+      <label>Historia común — elige una
+        <select id="ob-historia">
+          <option value="historia">Historia de España</option>
+          <option value="filosofia">Historia de la Filosofía</option>
+        </select>
+      </label>
+
+      <label>Materias específicas (Fase Voluntaria) — marca las que vas a hacer
+        <div id="ob-especificas" class="checkbox-grid"></div>
+      </label>
+
+      <label>Convocatoria
+        <select id="ob-convocatoria">
+          <option value="ordinaria">Ordinaria — junio 2026</option>
+          <option value="extraordinaria">Extraordinaria — julio 2026</option>
+        </select>
+      </label>
+
+      <button id="ob-start" class="btn-primary">Empezar a estudiar 🚀</button>
+    </div>
+  </section>
+
+  <!-- ========================== APP ========================== -->
+  <div id="app" class="app hidden">
+    <header class="topbar">
+      <div class="brand">📚 Mi PAU <span class="region">Murcia 2026</span></div>
+      <div class="user topbar-actions">
+        <span id="user-greeting"></span>
+        <button id="btn-foco" class="btn-ghost" title="Modo concentración">🎯</button>
+        <button id="btn-notif" class="btn-ghost" title="Notificaciones">🔔</button>
+        <button id="btn-ia-config" class="btn-ghost" title="Ajustes IA">🤖</button>
+        <button id="btn-export" class="btn-ghost" title="Exportar / Sincronizar">⬇️</button>
+        <button id="btn-reset" class="btn-ghost" title="Reiniciar">⚙️</button>
+      </div>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab active" data-tab="dashboard">🏠 Inicio</button>
+      <button class="tab" data-tab="materias">📖 Materias</button>
+      <button class="tab" data-tab="planner">📅 Plan</button>
+      <button class="tab" data-tab="pomodoro">⏱️ Pomodoro</button>
+      <button class="tab" data-tab="examenes">📝 Exámenes</button>
+      <button class="tab" data-tab="flashcards">🃏 Flashcards</button>
+      <button class="tab" data-tab="tests">✅ Tests</button>
+      <button class="tab" data-tab="simulacro">⏱️ Simulacro</button>
+      <button class="tab" data-tab="apuntes">📓 Apuntes</button>
+      <button class="tab" data-tab="puntos">🎯 Análisis</button>
+      <button class="tab" data-tab="logros">🏆 Logros</button>
+      <button class="tab" data-tab="nota">🧮 Nota</button>
+      <button class="tab" data-tab="tutor">🤖 Tutor IA</button>
+      <button class="tab" data-tab="recursos">🔗 Recursos</button>
+    </nav>
+
+    <main>
+      <!-- ============== DASHBOARD ============== -->
+      <section id="tab-dashboard" class="tab-panel active">
+        <div class="hero">
+          <div class="countdown-card">
+            <span class="label">Faltan</span>
+            <span id="countdown-days" class="big-number">--</span>
+            <span class="label">días para tu primer examen</span>
+            <span id="countdown-date" class="muted"></span>
+          </div>
+
+          <div class="quote-card">
+            <span class="quote-icon">💭</span>
+            <p id="daily-quote"></p>
+          </div>
+        </div>
+
+        <div class="card" id="calendario-pau">
+          <h3>📆 Calendario de tus exámenes</h3>
+          <div id="calendario-list"></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <h3>🔥 Tu racha</h3>
+            <p class="big-number" id="streak-days">0</p>
+            <p class="muted">días seguidos estudiando</p>
+          </div>
+          <div class="card">
+            <h3>⏱️ Hoy</h3>
+            <p class="big-number"><span id="today-minutes">0</span> min</p>
+            <p class="muted">tiempo de estudio registrado</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>📊 Progreso por materia</h3>
+          <div id="progress-list"></div>
+        </div>
+
+        <div class="card">
+          <h3>📅 Tus próximos exámenes</h3>
+          <ul id="exam-dates"></ul>
+        </div>
+      </section>
+
+      <!-- ============== MATERIAS ============== -->
+      <section id="tab-materias" class="tab-panel">
+        <div id="materias-list"></div>
+      </section>
+
+      <!-- ============== PLANNER ============== -->
+      <section id="tab-planner" class="tab-panel">
+        <div class="card">
+          <h3>📅 Plan semanal</h3>
+          <p class="muted">Haz clic en una celda para añadir/editar una sesión, o deja que la app te genere un plan inteligente.</p>
+          <div class="row">
+            <button id="plan-auto" class="btn-primary">🤖 Generar plan automático</button>
+            <button id="plan-clear" class="btn-ghost">🗑️ Limpiar todo</button>
+          </div>
+          <div class="planner-wrap">
+            <table id="planner" class="planner"></table>
+          </div>
+        </div>
+        <div class="card">
+          <h3>💡 Recomendaciones</h3>
+          <ul>
+            <li><strong>Bloques de 50 min</strong> con descansos de 10 min funcionan mejor que sesiones largas.</li>
+            <li>Mezcla materias en el mismo día (<em>interleaving</em>) para fijar mejor los conceptos.</li>
+            <li>Reserva el <strong>fin de semana</strong> para repasos y simulacros cronometrados.</li>
+            <li>Duerme <strong>8 horas</strong>: el sueño consolida la memoria.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ============== POMODORO ============== -->
+      <section id="tab-pomodoro" class="tab-panel">
+        <div class="pomodoro-card">
+          <h3>⏱️ Pomodoro</h3>
+          <div class="pomo-timer" id="pomo-display">25:00</div>
+          <div class="pomo-mode" id="pomo-mode">Foco</div>
+
+          <label>Materia que estás estudiando
+            <select id="pomo-materia"></select>
+          </label>
+
+          <div class="pomo-controls">
+            <button id="pomo-start" class="btn-primary">▶️ Iniciar</button>
+            <button id="pomo-pause" class="btn-ghost">⏸️ Pausa</button>
+            <button id="pomo-reset" class="btn-ghost">⟲ Reiniciar</button>
+          </div>
+
+          <div class="pomo-cycles">
+            Ciclos completados hoy: <strong id="pomo-cycles">0</strong>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>📈 Sesiones recientes</h3>
+          <ul id="sessions-list"></ul>
+        </div>
+      </section>
+
+      <!-- ============== EXÁMENES PAU ============== -->
+      <section id="tab-examenes" class="tab-panel">
+        <div class="card">
+          <h3>📝 Banco de exámenes PAU Murcia</h3>
+          <p class="muted">Selecciona una materia para ver los exámenes oficiales de años anteriores. Pulsa <strong>Simulacro</strong> para hacer el examen cronometrado (90 min).</p>
+          <label>Materia
+            <select id="exam-materia"></select>
+          </label>
+          <div id="exam-list"></div>
+        </div>
+
+        <div class="card">
+          <h3>📊 Tus simulacros realizados</h3>
+          <ul id="simulacros-list"></ul>
+        </div>
+
+        <div class="card">
+          <h3>🤖 Importar examen con IA</h3>
+          <p class="muted">Pega texto de un examen oficial (o sube PDF/Word) y la IA extraerá preguntas tipo test para añadirlas a tus tests personalizados.</p>
+          <label>Materia
+            <select id="imp-ex-materia"></select>
+          </label>
+          <input id="imp-ex-file" type="file" accept=".pdf,.doc,.docx,.txt" />
+          <textarea id="imp-ex-texto" rows="6" placeholder="O pega aquí el texto del examen…"></textarea>
+          <div class="row">
+            <button id="imp-ex-go" class="btn-primary">🧠 Extraer preguntas con IA</button>
+          </div>
+          <div id="imp-ex-status" class="muted"></div>
+          <div id="imp-ex-preview"></div>
+        </div>
+      </section>
+
+      <!-- ============== FLASHCARDS ============== -->
+      <section id="tab-flashcards" class="tab-panel">
+        <div class="card" id="fc-decks">
+          <h3>🃏 Mis mazos</h3>
+          <p class="muted">Repaso con <strong>repetición espaciada</strong> (algoritmo SM-2): las tarjetas que fallas vuelven antes; las que dominas se espacian.</p>
+          <div id="fc-decks-list"></div>
+          <div class="row" style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap">
+            <button id="fc-create" class="btn-ghost">➕ Crear tarjeta nueva</button>
+            <button id="fc-import-banco" class="btn-secondary">📦 Importar banco predefinido</button>
+          </div>
+        </div>
+
+        <div class="card hidden" id="fc-study">
+          <div class="fc-header">
+            <h3 id="fc-deck-name">Mazo</h3>
+            <button id="fc-back" class="btn-ghost">← Volver</button>
+          </div>
+          <div class="fc-progress">
+            <span id="fc-counter">0 / 0</span>
+            <span id="fc-due-count" class="muted"></span>
+          </div>
+          <div class="fc-card" id="fc-card">
+            <div class="fc-side fc-front" id="fc-front"></div>
+            <div class="fc-side fc-back hidden" id="fc-back-side"></div>
+          </div>
+          <div class="fc-controls" id="fc-show-controls">
+            <button id="fc-flip" class="btn-primary">Mostrar respuesta</button>
+          </div>
+          <div class="fc-controls hidden" id="fc-rating">
+            <button class="btn-rating again" data-q="0">😵 Otra vez</button>
+            <button class="btn-rating hard" data-q="3">😬 Difícil</button>
+            <button class="btn-rating good" data-q="4">🙂 Bien</button>
+            <button class="btn-rating easy" data-q="5">😎 Fácil</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============== TESTS ============== -->
+      <section id="tab-tests" class="tab-panel">
+        <div class="card" id="test-setup">
+          <h3>✅ Tests tipo PAU</h3>
+          <p class="muted">Pon a prueba lo que sabes con preguntas tipo test. Al terminar, te diremos en qué fallas más.</p>
+          <label>Materia
+            <select id="test-materia"></select>
+          </label>
+          <label>Nº preguntas
+            <select id="test-num">
+              <option value="5">5 preguntas (rápido)</option>
+              <option value="10" selected>10 preguntas</option>
+              <option value="0">Todas</option>
+            </select>
+          </label>
+          <button id="test-start" class="btn-primary">Empezar test</button>
+        </div>
+
+        <div class="card hidden" id="test-running">
+          <div class="test-progress">
+            <span id="test-counter">1 / 10</span>
+            <button id="test-cancel" class="btn-ghost">Cancelar</button>
+          </div>
+          <div id="test-question"></div>
+          <div id="test-options"></div>
+          <div id="test-feedback" class="hidden"></div>
+          <button id="test-next" class="btn-primary hidden">Siguiente →</button>
+        </div>
+
+        <div class="card hidden" id="test-result">
+          <h3>🎯 Resultado</h3>
+          <div id="test-score"></div>
+          <button id="test-retry" class="btn-primary">Hacer otro test</button>
+        </div>
+
+        <div class="card" id="test-stats">
+          <h3>📈 Tu evolución</h3>
+          <div id="test-history"></div>
+        </div>
+      </section>
+
+      <!-- ============== SIMULACRO ============== -->
+      <section id="tab-simulacro" class="tab-panel">
+        <div class="card">
+          <h3>⏱️ Simulacro de examen real</h3>
+          <p class="muted">Reproduce las condiciones del examen PAU: 90 min cronometrados, sin pausas. Al terminar, registra la nota.</p>
+          <div id="simu-config">
+            <label>Materia
+              <select id="simu-materia"></select>
+            </label>
+            <label>Duración (min)
+              <input id="simu-duracion" type="number" min="30" max="180" value="90" />
+            </label>
+            <label>Año del examen <span class="muted">(opcional)</span>
+              <input id="simu-anio" type="text" placeholder="2024" />
+            </label>
+            <button id="simu-start" class="btn-primary">▶️ Empezar simulacro</button>
+            <p class="muted" style="font-size:0.85rem">💡 Tendrás un cronómetro a pantalla completa. No salgas del navegador para mantenerte concentrada.</p>
+          </div>
+
+          <div id="simu-running" class="hidden">
+            <div class="simu-timer">
+              <div class="simu-time" id="simu-time">--:--</div>
+              <div class="simu-progress"><div id="simu-bar"></div></div>
+              <div class="muted" id="simu-info"></div>
+            </div>
+            <textarea id="simu-notas" placeholder="📝 Tus notas durante el simulacro (opcional)…" rows="6"></textarea>
+            <div class="row">
+              <button id="simu-finish" class="btn-primary">✅ He terminado</button>
+              <button id="simu-cancel" class="btn-ghost">Cancelar</button>
+            </div>
+          </div>
+
+          <div id="simu-result" class="hidden">
+            <h4>🎉 ¡Simulacro completado!</h4>
+            <p class="muted">Tiempo empleado: <strong id="simu-elapsed">--</strong></p>
+            <label>Tu nota estimada (0–10)
+              <input id="simu-nota" type="number" min="0" max="10" step="0.1" />
+            </label>
+            <label>Comentarios
+              <textarea id="simu-coment" rows="3" placeholder="¿Qué te ha costado más? ¿Qué dominas?"></textarea>
+            </label>
+            <button id="simu-save" class="btn-primary">💾 Guardar simulacro</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>📊 Histórico de simulacros</h3>
+          <canvas id="simu-chart" height="180"></canvas>
+          <div id="simu-history"></div>
+        </div>
+      </section>
+
+      <!-- ============== APUNTES ============== -->
+      <section id="tab-apuntes" class="tab-panel">
+        <div class="card">
+          <h3>📓 Mis apuntes</h3>
+          <p class="muted">Apuntes en <strong>Markdown</strong> por materia. Se guardan automáticamente.</p>
+          <label>Materia
+            <select id="notes-materia"></select>
+          </label>
+          <textarea id="notes-editor" rows="20" placeholder="Escribe aquí tus apuntes en Markdown…
+# Tema 1: …
+- Punto 1
+- Punto 2
+
+**Importante:** …"></textarea>
+          <div class="notes-actions">
+            <button id="notes-preview" class="btn-ghost">👁️ Vista previa</button>
+            <span id="notes-saved" class="muted"></span>
+          </div>
+          <div id="notes-render" class="notes-render hidden"></div>
+        </div>
+
+        <div class="card">
+          <h3>📎 Archivos y enlaces</h3>
+          <p class="muted">Sube apuntes en PDF, Word, texto o imágenes, o guarda enlaces a recursos. El texto extraído se podrá usar luego con la IA (resumir, generar tests, etc.).</p>
+
+          <div class="adj-toolbar">
+            <button id="adj-upload-btn" class="btn-primary">📤 Subir archivo</button>
+            <input id="adj-file-input" type="file" multiple
+              accept=".pdf,.docx,.txt,.md,.markdown,image/*" hidden />
+            <button id="adj-link-btn" class="btn-ghost">🔗 Añadir enlace</button>
+          </div>
+          <div id="adj-link-form" class="adj-link-form hidden">
+            <input id="adj-link-url" type="url" placeholder="https://…" />
+            <input id="adj-link-title" type="text" placeholder="Título (opcional)" />
+            <div class="row">
+              <button id="adj-link-save" class="btn-primary">Guardar</button>
+              <button id="adj-link-cancel" class="btn-ghost">Cancelar</button>
+            </div>
+          </div>
+          <div id="adj-status" class="muted"></div>
+          <div id="adj-list" class="adj-list"></div>
+        </div>
+      </section>
+
+      <!-- ============== ANÁLISIS PUNTOS DÉBILES ============== -->
+      <section id="tab-puntos" class="tab-panel">
+        <div class="card">
+          <h3>🎯 Top 3 prioridades de hoy</h3>
+          <p class="muted">Cruzando temas pendientes, % de aciertos en tests y nota de simulacros.</p>
+          <div id="prioridades"></div>
+        </div>
+
+        <div class="card">
+          <h3>📊 Análisis por materia</h3>
+          <div id="analisis-table"></div>
+        </div>
+
+        <div class="card">
+          <h3>🧘 Bienestar</h3>
+          <div id="bienestar"></div>
+        </div>
+      </section>
+
+      <!-- ============== LOGROS ============== -->
+      <section id="tab-logros" class="tab-panel">
+        <div class="card">
+          <h3>🏆 Tus logros</h3>
+          <p class="muted"><span id="logros-count">0</span> de <span id="logros-total">0</span> desbloqueados</p>
+          <div id="logros-grid"></div>
+        </div>
+      </section>
+
+      <!-- ============== CALCULADORA NOTA ============== -->
+      <section id="tab-nota" class="tab-panel">
+        <div class="card">
+          <h3>🎯 Tu grado objetivo</h3>
+          <p class="muted">Más de 240 grados de toda España. ¿No está el tuyo? Añádelo manualmente.</p>
+          <input id="grado-filter" type="search" placeholder="🔍 Buscar grado, universidad o ciudad…" />
+          <label>Selecciona el grado al que quieres acceder
+            <select id="grado-select" size="1"></select>
+          </label>
+          <div class="row" style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+            <button id="btn-grado-add" class="btn-secondary">➕ Añadir grado manual</button>
+            <button id="btn-grado-edit" class="btn-secondary" disabled>✏️ Editar este grado</button>
+            <button id="btn-grado-delete" class="btn-secondary" disabled style="display:none;">🗑️ Eliminar</button>
+          </div>
+          <div id="grado-info" class="grado-info"></div>
+        </div>
+
+        <div class="card">
+          <h3>🧮 Calculadora nota PAU</h3>
+          <p class="muted">Estima tu <strong>nota de admisión</strong> a partir de tus calificaciones.</p>
+
+          <label>Nota media de Bachillerato (0-10)
+            <input type="number" id="calc-nmb" min="0" max="10" step="0.01" placeholder="Ej. 8.50" />
+          </label>
+
+          <label>Nota Fase General (media de los 4 exámenes, 0-10)
+            <input type="number" id="calc-fg" min="0" max="10" step="0.01" placeholder="Ej. 7.20" />
+          </label>
+
+          <h4>Fase Voluntaria — hasta 2 mejores notas</h4>
+          <div class="row">
+            <input type="number" id="calc-m1" min="0" max="10" step="0.01" placeholder="Nota M1 (≥5)" />
+            <select id="calc-p1">
+              <option value="0.1">Ponderación 0,1</option>
+              <option value="0.15">Ponderación 0,15</option>
+              <option value="0.2" selected>Ponderación 0,2</option>
+            </select>
+          </div>
+          <div class="row">
+            <input type="number" id="calc-m2" min="0" max="10" step="0.01" placeholder="Nota M2 (≥5)" />
+            <select id="calc-p2">
+              <option value="0.1">Ponderación 0,1</option>
+              <option value="0.15">Ponderación 0,15</option>
+              <option value="0.2" selected>Ponderación 0,2</option>
+            </select>
+          </div>
+
+          <button id="calc-go" class="btn-primary">Calcular</button>
+
+          <div id="calc-result" class="calc-result"></div>
+
+          <details class="info">
+            <summary>ℹ️ Cómo funciona la fórmula</summary>
+            <p><strong>Nota de Acceso</strong> = 0,6 × Nota Bachillerato + 0,4 × Fase General <em>(mínimo 5 para superar la PAU; FG ≥ 4)</em></p>
+            <p><strong>Nota de Admisión</strong> = Nota Acceso + a·M1 + b·M2 <em>(solo si M ≥ 5; máximo +4 puntos)</em></p>
+            <p>Las ponderaciones (0,1 / 0,15 / 0,2) dependen del grado universitario. Consulta las <a href="https://www.um.es/web/estudios/utilidades/ponderaciones" target="_blank" rel="noopener">ponderaciones oficiales UMU</a>.</p>
+          </details>
+        </div>
+      </section>
+
+      <!-- ============== TUTOR IA ============== -->
+      <section id="tab-tutor" class="tab-panel">
+        <div class="card ia-status">
+          <div id="ia-status-text">Comprobando configuración…</div>
+          <button id="ia-open-settings" class="btn-ghost">⚙️ Configurar IA</button>
+        </div>
+
+        <div class="card">
+          <h3>🤖 Tutor IA — chat</h3>
+          <p class="muted">Pregúntale dudas concretas. Selecciona la materia para que el contexto sea más preciso.</p>
+          <div class="row">
+            <label>Materia
+              <select id="ia-chat-materia"></select>
+            </label>
+            <button id="ia-chat-clear" class="btn-ghost">🗑️ Limpiar chat</button>
+          </div>
+          <div id="ia-chat-log" class="ia-chat-log"></div>
+          <div class="ia-chat-input">
+            <textarea id="ia-chat-text" rows="3" placeholder="Escribe tu pregunta…"></textarea>
+            <div class="ia-chat-buttons">
+              <button id="ia-chat-mic" class="btn-ghost" title="Hablar">🎤</button>
+              <button id="ia-chat-tts" class="btn-ghost" title="Leer respuesta">🔊</button>
+              <button id="ia-chat-send" class="btn-primary">Enviar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>✏️ Corregir redacción</h3>
+          <p class="muted">Pega un comentario, redacción o respuesta abierta. La IA la evaluará con la rúbrica PAU.</p>
+          <label>Materia
+            <select id="ia-corr-materia"></select>
+          </label>
+          <textarea id="ia-corr-text" rows="8" placeholder="Pega aquí tu texto…"></textarea>
+          <div class="row">
+            <button id="ia-corr-go" class="btn-primary">Corregir (genérico)</button>
+            <button id="ia-corr-rub" class="btn-secondary">📐 Corregir con rúbrica PAU</button>
+          </div>
+          <div id="ia-corr-out" class="ia-output"></div>
+        </div>
+
+        <div class="card">
+          <h3>🎲 Generar test con IA</h3>
+          <p class="muted">Crea preguntas tipo test sobre cualquier tema y guárdalas en tu banco.</p>
+          <div class="row">
+            <label>Materia
+              <select id="ia-gen-materia"></select>
+            </label>
+            <label>Nº preguntas
+              <input id="ia-gen-n" type="number" min="3" max="15" value="5" />
+            </label>
+          </div>
+          <input id="ia-gen-tema" type="text" placeholder="Tema (ej. La Restauración borbónica)" />
+          <div class="row">
+            <button id="ia-gen-go" class="btn-primary">Generar</button>
+            <button id="ia-gen-save" class="btn-ghost hidden">💾 Guardar en mi banco</button>
+          </div>
+          <div id="ia-gen-out" class="ia-output"></div>
+        </div>
+
+        <div class="card">
+          <h3>📝 Resumir / esquematizar</h3>
+          <p class="muted">Pega apuntes y la IA te devuelve resumen, esquema y 5 preguntas de autoevaluación.</p>
+          <div class="row">
+            <label>Materia
+              <select id="ia-res-materia"></select>
+            </label>
+            <input id="ia-res-tema" type="text" placeholder="Tema" />
+          </div>
+          <textarea id="ia-res-text" rows="8" placeholder="Pega aquí el material…"></textarea>
+          <div class="row">
+            <button id="ia-res-go" class="btn-primary">Resumir</button>
+            <button id="ia-res-save" class="btn-ghost hidden">💾 Guardar en mis apuntes</button>
+          </div>
+          <div id="ia-res-out" class="ia-output"></div>
+        </div>
+
+        <div class="card">
+          <h3>👶 Explicar como si tuviera 12 años</h3>
+          <textarea id="ia-simple-text" rows="5" placeholder="Pega una explicación complicada…"></textarea>
+          <div class="row">
+            <button id="ia-simple-go" class="btn-primary">Reformular</button>
+          </div>
+          <div id="ia-simple-out" class="ia-output"></div>
+        </div>
+      </section>
+
+      <!-- ============== RECURSOS ============== -->
+      <section id="tab-recursos" class="tab-panel">
+        <div class="card">
+          <h3>🔗 Recursos oficiales y de estudio</h3>
+          <div id="resources-list"></div>
+        </div>
+        <div class="card">
+          <h3>📅 Fechas oficiales convocatoria</h3>
+          <div id="exam-info"></div>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="footer">
+      <small>Mi PAU 2026 · datos de la Región de Murcia · hecho con ❤️</small>
+    </footer>
+  </div>
+
+  <!-- ========================== MODAL ========================== -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-content">
+      <button class="modal-close" id="modal-close">×</button>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Datos y módulos -->
+  <script src="js/data.js"></script>
+  <script src="js/exams.js"></script>
+  <script src="js/flashcards.js"></script>
+  <script src="js/tests.js"></script>
+  <script src="js/grados.js"></script>
+  <script src="js/logros.js"></script>
+  <script src="js/ia.js"></script>
+
+  <!-- Librerías externas (PDF/Word) -->
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/legacy/build/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mammoth@1.7.2/mammoth.browser.min.js"></script>
+
+  <!-- Resto de la app -->
+  <script src="js/adjuntos.js"></script>
+  <script src="js/extras.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    // Registro PWA
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js").catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
