@@ -202,9 +202,16 @@
   }
 
   // ---------- Modal de cuenta ----------
-  function abrirModalCuenta() {
+  async function abrirModalCuenta() {
     if (!auth.user) return mostrarLogin();
-    const p = auth.profile || {};
+    // Refetch perfil desde la base para evitar datos cacheados desactualizados
+    let pFresh = null;
+    try {
+      const { data } = await auth.client
+        .from("profiles").select("*").eq("id", auth.user.id).maybeSingle();
+      pFresh = data;
+    } catch (_) { /* ignorar, usaremos cache */ }
+    const p = pFresh || auth.profile || {};
     const m = document.createElement("div");
     m.className = "modal-bg"; m.id = "modal-cuenta";
     m.innerHTML = `
@@ -275,11 +282,31 @@
       const parches = {};
       for (const [k, v] of fd.entries()) parches[k] = v;
       ["notif_email","notif_push","marketing_ok"].forEach(k => parches[k] = !!fd.get(k));
+
+      // Saneado: campos date/text vacíos van como null para no romper el UPDATE
+      if (parches.fecha_pau === "") parches.fecha_pau = null;
+      ["nombre","curso","comunidad","centro"].forEach(k => {
+        if (typeof parches[k] === "string") {
+          parches[k] = parches[k].trim();
+          if (parches[k] === "") parches[k] = null;
+        }
+      });
+
       try {
         await auth.actualizarPerfil(parches);
         e.target.querySelector("button[type=submit]").textContent = "✓ Guardado";
         setTimeout(() => e.target.querySelector("button[type=submit]").textContent = "Guardar", 1500);
-      } catch (err) { console.group("[UI-AUTH] ERROR"); console.error("Raw error:", err); console.error("message:", err?.message); console.error("error_description:", err?.error_description); console.groupEnd(); alert(err.message); }
+      } catch (err) {
+        console.group("[UI-AUTH] ERROR al guardar perfil");
+        console.error("Raw error:", err);
+        console.error("message:", err?.message);
+        console.error("details:", err?.details);
+        console.error("hint:", err?.hint);
+        console.error("code:", err?.code);
+        console.error("parches enviados:", parches);
+        console.groupEnd();
+        alert("Error al guardar: " + (err?.message || err));
+      }
     });
 
     m.querySelector("#cuenta-logout")?.addEventListener("click", async () => {

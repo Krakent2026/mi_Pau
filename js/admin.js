@@ -15,10 +15,27 @@
   let presenceChannel = null;
   let onlineSet = new Set();
   let presenceTracking = false;
+  let adminConfirmado = false;
 
-  function esAdmin() {
+  function esAdminCache() {
     const p = window.PAU_AUTH && window.PAU_AUTH.profile;
     return !!(p && p.rol === "admin");
+  }
+
+  // Comprueba contra el servidor (RPC is_admin) — más fiable que el perfil cacheado
+  async function comprobarAdminServidor() {
+    if (!window.PAU_AUTH || !window.PAU_AUTH.client || !window.PAU_AUTH.user) return false;
+    try {
+      const { data, error } = await window.PAU_AUTH.client.rpc("is_admin");
+      if (error) {
+        console.warn("[admin] is_admin RPC:", error.message);
+        return false;
+      }
+      return !!data;
+    } catch (e) {
+      console.warn("[admin] is_admin error:", e);
+      return false;
+    }
   }
 
   function escape(s) {
@@ -86,7 +103,7 @@
   function init() {
     if (booted) return;
     if (!window.PAU_AUTH || !window.PAU_AUTH.client) return;
-    if (!esAdmin()) return;
+    if (!adminConfirmado && !esAdminCache()) return;
     booted = true;
     inyectarUI();
     cargar();
@@ -298,15 +315,24 @@
   // -----------------------------------------------------------
   // Arranque
   // -----------------------------------------------------------
+  async function intentar() {
+    if (!window.PAU_AUTH) return;
+    if (window.PAU_AUTH.user) iniciarPresencia();
+    // Comprobar siempre contra el servidor para evitar perfiles cacheados desactualizados
+    if (window.PAU_AUTH.user && !booted) {
+      const ok = await comprobarAdminServidor();
+      if (ok) {
+        adminConfirmado = true;
+        init();
+      }
+    }
+  }
+
   function arrancar() {
     if (!window.PAU_AUTH) return;
-    const intentar = () => {
-      if (window.PAU_AUTH.user) iniciarPresencia();
-      if (esAdmin()) init();
-    };
     intentar();
     if (typeof window.PAU_AUTH.onChange === "function") {
-      window.PAU_AUTH.onChange(intentar);
+      window.PAU_AUTH.onChange(() => intentar());
     }
   }
 
@@ -319,6 +345,7 @@
   window.PAU_ADMIN = {
     init,
     recargar: () => { init(); cargar(); },
-    esAdmin,
+    esAdmin: esAdminCache,
+    comprobarAdmin: comprobarAdminServidor,
   };
 })();
