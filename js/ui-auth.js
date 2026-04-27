@@ -299,7 +299,14 @@
     });
 
     m.querySelector("#cuenta-logout")?.addEventListener("click", async () => {
-      await auth.logout(); m.remove();
+      try {
+        await auth.logout();
+      } catch (e) {
+        console.warn("[UI-AUTH] logout error:", e);
+      }
+      m.remove();
+      // Recarga forzada: limpia el estado de la app y muestra el login
+      setTimeout(() => { window.location.reload(); }, 100);
     });
     m.querySelector("#cuenta-borrar")?.addEventListener("click", async () => {
       await auth.eliminarCuenta(); m.remove();
@@ -397,7 +404,25 @@
     return;
   }
 
-  auth.init().then(() => {
+  auth.init().then(async () => {
+    // Si viene del enlace de confirmación de email: cerrar sesión y mostrar login
+    // para que el usuario inicie sesión manualmente con sus credenciales.
+    if (location.search.includes("verified=1") && auth.user) {
+      try { await auth.logout(); } catch (_) {}
+      // Limpiar el query string para que no se repita al recargar
+      const cleanUrl = location.pathname + location.hash;
+      history.replaceState({}, "", cleanUrl);
+      mostrarLogin();
+      // Mostrar mensaje de éxito en el login
+      const msg = document.querySelector("#auth-msg");
+      if (msg) {
+        msg.textContent = "✓ Email confirmado. Ya puedes iniciar sesión.";
+        msg.className = "auth-msg ok";
+        msg.style.color = "#16a34a";
+        msg.style.fontWeight = "600";
+      }
+      return;
+    }
     if (!auth.user) mostrarLogin();
     else ocultarLogin();
     pintarBotonUsuario();
