@@ -37,6 +37,7 @@
 
   let canal = null;
   let timerSubida = null;
+  let pollTimer = null;
 
   function leerLocal() {
     try {
@@ -46,10 +47,12 @@
     } catch { return null; }
   }
 
-  function escribirLocal(data) {
+  // recargarUI=true: re-renderiza la app (para escrituras desde la nube)
+  // recargarUI=false: solo guarda en localStorage (para escrituras locales)
+  function escribirLocal(data, recargarUI) {
     try {
       localStorage.setItem(STATE_KEY, JSON.stringify(data));
-      if (typeof window.load === "function") window.load();
+      if (recargarUI && typeof window.load === "function") window.load();
     } catch (e) { console.warn("[SYNC] escribir local:", e); }
   }
 
@@ -78,7 +81,8 @@
       const data = leerLocal();
       if (!data) { estado.sincronizando = false; return; }
       data.lastModified = Date.now();
-      escribirLocal(data);
+      // No re-cargamos UI: el cambio viene del propio dispositivo
+      escribirLocal(data, false);
 
       const { error } = await sb.from("estados").upsert({
         user_id: window.PAU_AUTH.user.id,
@@ -112,7 +116,8 @@
     const local = leerLocal();
     const fusionado = fusionar(local, remoto);
     fusionado.lastModified = Date.now();
-    escribirLocal(fusionado);
+    // Re-cargar UI porque el cambio viene de la nube
+    escribirLocal(fusionado, true);
     estado.ultimaBajada = new Date();
     emitirEvento();
   }
@@ -120,22 +125,46 @@
   function suscribirseTiempoReal() {
     if (canal) sb.removeChannel(canal);
     if (!window.PAU_AUTH.user) return;
+    const onPayload = (payload) => {
+      // Ignorar nuestros propios cambios
+      if (payload.new?.device_id === DEVICE_ID) return;
+      if (!payload.new?.data) return;
+      const local = leerLocal();
+      const fusionado = fusionar(local, { data: payload.new.data, updated_at: payload.new.updated_at });
+      // Re-cargar UI porque viene de otro dispositivo
+      escribirLocal(fusionado, true);
+      estado.ultimaBajada = new Date();
+      emitirEvento();
+    };
     canal = sb.channel("estado-" + window.PAU_AUTH.user.id)
       .on("postgres_changes", {
-        event: "UPDATE",
+        event: "*",  // INSERT, UPDATE, DELETE
         schema: "public",
         table: "estados",
         filter: "user_id=eq." + window.PAU_AUTH.user.id,
-      }, (payload) => {
-        // Ignorar nuestros propios cambios
-        if (payload.new?.device_id === DEVICE_ID) return;
+      }, onPayload)
+      .subscribe((status) => {
+        console.log("[SYNC] Realtime status:", status);
+      });
+
+    // Polling de respaldo cada 30s por si Realtime falla
+    clearInterval(pollTimer);
+    pollTimer = setInterval(async () => {
+      if (!window.PAU_AUTH.user || estado.sincronizando) return;
+      try {
+        const remoto = await obtenerRemoto();
+        if (!remoto) return;
         const local = leerLocal();
-        const fusionado = fusionar(local, { data: payload.new.data, updated_at: payload.new.updated_at });
-        escribirLocal(fusionado);
-        estado.ultimaBajada = new Date();
-        emitirEvento();
-      })
-      .subscribe();
+        const tLocal = local?.lastModified || 0;
+        const tRemoto = new Date(remoto.updated_at).getTime();
+        if (tRemoto > tLocal && remoto.device_id !== DEVICE_ID) {
+          const fusionado = fusionar(local, remoto);
+          escribirLocal(fusionado, true);
+          estado.ultimaBajada = new Date();
+          emitirEvento();
+        }
+      } catch (e) { /* silencioso */ }
+    }, 30000);
   }
 
   function emitirEvento() {
@@ -166,6 +195,7 @@
     if (canal) sb.removeChannel(canal);
     canal = null;
     clearTimeout(timerSubida);
+    clearInterval(pollTimer);
     emitirEvento();
   }
 
