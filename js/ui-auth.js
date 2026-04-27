@@ -136,7 +136,7 @@
           msg.textContent = "✓ Te hemos enviado un email para recuperar la contraseña";
           msg.className = "auth-msg ok";
         }
-      } catch (err) {
+      } catch (err) { console.group("[UI-AUTH] ERROR"); console.error("Raw error:", err); console.error("message:", err?.message); console.error("error_description:", err?.error_description); console.groupEnd();
         const raw = err.message || err.error_description || "Error inesperado";
         const traducido = traducirErrorAuth(raw);
         msg.textContent = "✗ " + traducido;
@@ -270,7 +270,7 @@
         await auth.actualizarPerfil(parches);
         e.target.querySelector("button[type=submit]").textContent = "✓ Guardado";
         setTimeout(() => e.target.querySelector("button[type=submit]").textContent = "Guardar", 1500);
-      } catch (err) { alert(err.message); }
+      } catch (err) { console.group("[UI-AUTH] ERROR"); console.error("Raw error:", err); console.error("message:", err?.message); console.error("error_description:", err?.error_description); console.groupEnd(); alert(err.message); }
     });
 
     m.querySelector("#cuenta-logout")?.addEventListener("click", async () => {
@@ -391,4 +391,5 @@
 
   window.PAU_AUTH_UI = { abrirModalCuenta, abrirModalUpgrade, mostrarLogin };
 })();
+
 
