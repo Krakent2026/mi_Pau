@@ -2732,6 +2732,12 @@
 
     // Si hay usuario autenticado, cargar su estado desde la nube
     if (PAU_AUTH.user) {
+      // ¿Viene de un enlace de reset de contraseña?
+      if (location.search.includes("reset=1") || location.hash.includes("type=recovery")) {
+        mostrarCambioPassword(PAU_AUTH);
+        return;
+      }
+
       // Si hay sincronización disponible, activarla
       if (window.PAU_SYNC && window.PAU_SYNC.iniciar) {
         window.PAU_SYNC.iniciar();
@@ -2768,6 +2774,76 @@
         }
       });
     }
+  }
+
+  function mostrarCambioPassword(PAU_AUTH) {
+    // Ocultar todo
+    $("#onboarding").classList.add("hidden");
+    $("#app").classList.add("hidden");
+
+    // Crear formulario de cambio de contraseña
+    let overlay = document.getElementById("reset-password-screen");
+    if (overlay) overlay.remove();
+
+    overlay = document.createElement("div");
+    overlay.id = "reset-password-screen";
+    overlay.innerHTML = `
+      <div class="auth-card">
+        <h1>🔐 Nueva contraseña</h1>
+        <p class="auth-tag">Escribe tu nueva contraseña para continuar.</p>
+        <form id="reset-pw-form" autocomplete="on">
+          <div class="auth-field">
+            <label>Nueva contraseña</label>
+            <input type="password" id="reset-pw-new" minlength="8" required autocomplete="new-password" placeholder="Mínimo 8 caracteres">
+          </div>
+          <div class="auth-field">
+            <label>Repetir contraseña</label>
+            <input type="password" id="reset-pw-confirm" minlength="8" required autocomplete="new-password" placeholder="Repite la contraseña">
+          </div>
+          <button type="submit" class="btn-primary auth-submit">Guardar contraseña</button>
+          <p class="auth-msg" id="reset-pw-msg"></p>
+        </form>
+      </div>
+    `;
+    // Reusa los estilos de #auth-screen
+    overlay.style.cssText = "position:fixed;inset:0;z-index:10000;background:linear-gradient(135deg,#7c3aed 0%,#4f46e5 100%);display:flex;align-items:center;justify-content:center;padding:16px;";
+    document.body.appendChild(overlay);
+
+    overlay.querySelector("#reset-pw-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const pw = overlay.querySelector("#reset-pw-new").value;
+      const pw2 = overlay.querySelector("#reset-pw-confirm").value;
+      const msg = overlay.querySelector("#reset-pw-msg");
+
+      if (pw !== pw2) {
+        msg.textContent = "✗ Las contraseñas no coinciden";
+        msg.className = "auth-msg err";
+        return;
+      }
+      if (pw.length < 8) {
+        msg.textContent = "✗ Mínimo 8 caracteres";
+        msg.className = "auth-msg err";
+        return;
+      }
+
+      msg.textContent = "Guardando...";
+      msg.className = "auth-msg";
+      try {
+        const { error } = await PAU_AUTH.client.auth.updateUser({ password: pw });
+        if (error) throw error;
+        msg.textContent = "✓ Contraseña actualizada";
+        msg.className = "auth-msg ok";
+        // Limpiar URL y entrar en la app
+        history.replaceState(null, "", location.pathname);
+        setTimeout(() => {
+          overlay.remove();
+          showApp();
+        }, 1000);
+      } catch (err) {
+        msg.textContent = "✗ " + (err.message || "Error al guardar");
+        msg.className = "auth-msg err";
+      }
+    });
   }
 
   function showOnboarding() {
