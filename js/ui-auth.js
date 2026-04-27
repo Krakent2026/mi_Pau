@@ -72,11 +72,6 @@
           <button type="submit" class="btn-primary auth-submit">Entrar</button>
           <p class="auth-msg" id="auth-msg"></p>
         </form>
-        <div class="auth-divider"><span>o</span></div>
-        <div class="auth-social">
-          <button class="btn-google" id="auth-google">Continuar con Google</button>
-          <button class="btn-magic"  id="auth-magic">Enviar enlace mágico</button>
-        </div>
         <p class="auth-foot">
           <a href="legal/privacidad.html" target="_blank">Privacidad</a> ·
           <a href="legal/terminos.html"   target="_blank">Términos</a> ·
@@ -172,18 +167,7 @@
       }
     });
 
-    div.querySelector("#auth-google").addEventListener("click", async () => {
-      try { await auth.loginGoogle(); }
-      catch (e) { msg.textContent = e.message; msg.className = "auth-msg err"; }
-    });
-    div.querySelector("#auth-magic").addEventListener("click", async () => {
-      const email = form.email.value;
-      if (!email) { msg.textContent = "Escribe tu email primero"; msg.className = "auth-msg err"; return; }
-      try {
-        await auth.loginMagicLink(email);
-        msg.textContent = "✓ Enlace enviado. Revisa tu correo."; msg.className = "auth-msg ok";
-      } catch (e) { msg.textContent = e.message; msg.className = "auth-msg err"; }
-    });
+    // Login con Google y enlace mágico desactivados de momento (solo email/contraseña)
   }
 
   function ocultarLogin() {

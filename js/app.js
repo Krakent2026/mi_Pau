@@ -69,6 +69,22 @@
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }
 
+  // Exponer al módulo de sync con la nube (sync.js)
+  window.state = state;
+  window.save = save;
+  window.load = function reloadFromStorage() {
+    state = load();
+    window.state = state;
+    // Re-renderizar si la app ya está montada
+    try {
+      if (typeof renderDashboard === "function" && !$("#app").classList.contains("hidden")) {
+        renderDashboard();
+        if (typeof renderMaterias === "function") renderMaterias();
+        if (typeof renderPlanner === "function") renderPlanner();
+      }
+    } catch (e) { console.warn("[APP] reload render:", e); }
+  };
+
   // ---------------------- HELPERS ----------------------------
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
@@ -154,9 +170,9 @@
       state.perfil = { nombre, modalidad, historiaElegida, especificas, convocatoria };
       save();
       
-      // Si hay sincronización, iniciarla después de completar onboarding
-      if (window.PAU_SYNC && window.PAU_SYNC.iniciar) {
-        window.PAU_SYNC.iniciar();
+      // Si hay sincronización con la nube, iniciarla tras completar onboarding
+      if (window.PAU_SYNC_CLOUD && window.PAU_SYNC_CLOUD.iniciar) {
+        window.PAU_SYNC_CLOUD.iniciar();
       }
       
       showApp();
@@ -2738,18 +2754,20 @@
         return;
       }
 
-      // Si hay sincronización disponible, activarla
-      if (window.PAU_SYNC && window.PAU_SYNC.iniciar) {
-        window.PAU_SYNC.iniciar();
+      // Activar sincronización con la nube
+      if (window.PAU_SYNC_CLOUD && window.PAU_SYNC_CLOUD.iniciar) {
+        window.PAU_SYNC_CLOUD.iniciar();
       }
       
       // Cargar desde la nube (si existe)
-      if (window.PAU_SYNC && window.PAU_SYNC.forzarBajada) {
+      if (window.PAU_SYNC_CLOUD && window.PAU_SYNC_CLOUD.forzarBajada) {
         try {
-          await window.PAU_SYNC.forzarBajada();
+          await window.PAU_SYNC_CLOUD.forzarBajada();
+          // Recargar state local con los datos de la nube
+          state = load();
+          window.state = state;
         } catch (e) {
           console.warn("[APP] Error al sincronizar:", e);
-          // Continuar con los datos locales si la sincronización falla
         }
       }
       
@@ -2770,8 +2788,8 @@
           if ($("#app").classList.contains("hidden")) {
             showApp();
           }
-          if (window.PAU_SYNC && window.PAU_SYNC.iniciar) {
-            window.PAU_SYNC.iniciar();
+          if (window.PAU_SYNC_CLOUD && window.PAU_SYNC_CLOUD.iniciar) {
+            window.PAU_SYNC_CLOUD.iniciar();
           }
         } else if (auth_state.ready && !auth_state.user) {
           // Usuario cerró sesión: volver al onboarding/login
