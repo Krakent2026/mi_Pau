@@ -10,9 +10,12 @@ window.PAU_LOGROS = [
   { id: "racha-14",       icono: "🚀", nombre: "Imparable",             desc: "14 días seguidos estudiando.", check: (s) => s.racha.dias >= 14 },
   { id: "racha-30",       icono: "🏆", nombre: "Un mes de oro",         desc: "30 días seguidos estudiando.", check: (s) => s.racha.dias >= 30 },
 
-  // Pomodoros
-  { id: "pomo-10",        icono: "🍅", nombre: "10 Pomodoros",          desc: "Has completado 10 pomodoros.", check: (s) => s.sesiones.filter((x) => x.tipo === "pomodoro").length >= 10 },
-  { id: "pomo-50",        icono: "🍅🍅", nombre: "50 Pomodoros",         desc: "Eres una máquina del foco.", check: (s) => s.sesiones.filter((x) => x.tipo === "pomodoro").length >= 50 },
+  // Sesiones de estudio (cronómetro / temporizador)
+  { id: "pomo-10",        icono: "⏱️", nombre: "10 sesiones",            desc: "Has completado 10 sesiones de estudio.", check: (s) => (s.sesiones || []).length >= 10 },
+  { id: "pomo-50",        icono: "⏱️⏱️", nombre: "50 sesiones",          desc: "Eres una máquina del foco.", check: (s) => (s.sesiones || []).length >= 50 },
+  { id: "horas-10",       icono: "⌛", nombre: "10 horas de estudio",    desc: "Has acumulado 10 horas de estudio.", check: (s) => (s.sesiones || []).reduce((a, x) => a + (x.minutos || 0), 0) >= 600 },
+  { id: "horas-50",       icono: "🕰️", nombre: "50 horas de estudio",    desc: "Has acumulado 50 horas de estudio.", check: (s) => (s.sesiones || []).reduce((a, x) => a + (x.minutos || 0), 0) >= 3000 },
+  { id: "horas-100",      icono: "🏅", nombre: "100 horas de estudio",   desc: "Cien horas. Esto va en serio.", check: (s) => (s.sesiones || []).reduce((a, x) => a + (x.minutos || 0), 0) >= 6000 },
 
   // Flashcards
   { id: "fc-50",          icono: "🃏", nombre: "Mente afilada",         desc: "50 tarjetas repasadas.", check: (s) => Object.values(s.flashcards || {}).flat().reduce((a, c) => a + c.reps, 0) >= 50 },
