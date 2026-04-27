@@ -153,9 +153,13 @@
 
       state.perfil = { nombre, modalidad, historiaElegida, especificas, convocatoria };
       save();
-      $("#onboarding").classList.add("hidden");
-      $("#app").classList.remove("hidden");
-      bootApp();
+      
+      // Si hay sincronización, iniciarla después de completar onboarding
+      if (window.PAU_SYNC && window.PAU_SYNC.iniciar) {
+        window.PAU_SYNC.iniciar();
+      }
+      
+      showApp();
     });
   }
 
@@ -2706,6 +2710,76 @@
     renderApp();
   }
 
+  // ---- AUTENTICACIÓN CON SUPABASE (si está configurada) ----
+  async function initWithAuth() {
+    const PAU_AUTH = window.PAU_AUTH;
+    
+    // Si no hay autenticación disponible, ir al onboarding directo
+    if (!PAU_AUTH || !PAU_AUTH.configurado) {
+      showOnboarding();
+      return;
+    }
+
+    // Esperar a que se cargue la sesión
+    await PAU_AUTH.init();
+
+    // Si hay usuario autenticado, cargar su estado desde la nube
+    if (PAU_AUTH.user) {
+      // Si hay sincronización disponible, activarla
+      if (window.PAU_SYNC && window.PAU_SYNC.iniciar) {
+        window.PAU_SYNC.iniciar();
+      }
+      
+      // Cargar desde la nube (si existe)
+      if (window.PAU_SYNC && window.PAU_SYNC.forzarBajada) {
+        try {
+          await window.PAU_SYNC.forzarBajada();
+        } catch (e) {
+          console.warn("[APP] Error al sincronizar:", e);
+          // Continuar con los datos locales si la sincronización falla
+        }
+      }
+      
+      showApp();
+    } else {
+      // No hay usuario: mostrar onboarding (que incluye modal de login)
+      showOnboarding();
+    }
+
+    // Reaccionar a cambios de autenticación
+    if (PAU_AUTH.onChange) {
+      PAU_AUTH.onChange((auth_state) => {
+        if (auth_state.user && !document.getElementById("app").classList.contains("hidden")) {
+          // Usuario acaba de autenticarse
+          renderApp();
+          if (window.PAU_SYNC && window.PAU_SYNC.iniciar) {
+            window.PAU_SYNC.iniciar();
+          }
+        } else if (!auth_state.user && !document.getElementById("onboarding").classList.contains("hidden")) {
+          // Usuario cerró sesión
+          showOnboarding();
+        }
+      });
+    }
+  }
+
+  function showOnboarding() {
+    $("#onboarding").classList.remove("hidden");
+    $("#app").classList.add("hidden");
+  }
+
+  function showApp() {
+    $("#onboarding").classList.add("hidden");
+    $("#app").classList.remove("hidden");
+    // Cargar nombre del usuario si hay sesión
+    if (window.PAU_AUTH && window.PAU_AUTH.user) {
+      state.perfil = state.perfil || {};
+      state.perfil.nombre = window.PAU_AUTH.profile?.nombre || window.PAU_AUTH.user.email.split("@")[0] || "Estudiante";
+      save();
+    }
+    bootApp();
+  }
+
   function init() {
     // Modo tests unitarios: ?tests=1
     if (location.search.includes("tests=1") && window.PAU_TESTS_UNIT) {
@@ -2737,5 +2811,5 @@
     ul.insertAdjacentHTML("afterend", `<p><strong>${ok} / ${resultados.length}</strong> tests pasados.</p>`);
   }
 
-  document.addEventListener("DOMContentLoaded", init);
+  document.addEventListener("DOMContentLoaded", initWithAuth);
 })();
