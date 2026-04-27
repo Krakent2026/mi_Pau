@@ -2755,8 +2755,11 @@
       
       showApp();
     } else {
-      // No hay usuario: mostrar onboarding (que incluye modal de login)
-      showOnboarding();
+      // No hay usuario y MODO=personal: ui-auth.js mostrará el login.
+      // No mostramos onboarding aquí para evitar conflicto visual.
+      // Solo aseguramos que app y onboarding estén ocultos.
+      $("#onboarding").classList.add("hidden");
+      $("#app").classList.add("hidden");
     }
 
     // Reaccionar a cambios de autenticación
