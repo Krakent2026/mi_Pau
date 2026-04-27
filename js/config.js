@@ -12,7 +12,7 @@ window.PAU_CONFIG = {
   // -------- Marca --------
   APP_NAME:    "Mi PAU",
   APP_VERSION: "2.0.0",
-  APP_URL:     "https://krakent2026.github.io/mi_pau",
+  APP_URL:     "https://krakent2026.github.io/mi_Pau",
   SOPORTE_EMAIL: "soporte@mipau.app",
 
   // -------- Modo --------
