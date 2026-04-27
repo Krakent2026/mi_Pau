@@ -92,8 +92,17 @@
 
     function aplicarModo() {
       div.querySelectorAll(".auth-tab").forEach(t => t.classList.toggle("active", t.dataset.mode === mode));
-      div.querySelectorAll("[data-only]").forEach(f => f.style.display = f.dataset.only === mode ? "" : "none");
-      div.querySelectorAll("[data-not]").forEach(f => f.style.display = f.dataset.not === mode ? "none" : "");
+      div.querySelectorAll("[data-only]").forEach(f => {
+        const visible = f.dataset.only === mode;
+        f.style.display = visible ? "" : "none";
+        // Deshabilitar inputs ocultos para evitar "invalid form control not focusable"
+        f.querySelectorAll("input, select, textarea").forEach(el => { el.disabled = !visible; });
+      });
+      div.querySelectorAll("[data-not]").forEach(f => {
+        const visible = f.dataset.not !== mode;
+        f.style.display = visible ? "" : "none";
+        f.querySelectorAll("input, select, textarea").forEach(el => { el.disabled = !visible; });
+      });
       div.querySelector(".auth-submit").textContent = ({
         login: "Entrar", signup: "Crear cuenta", reset: "Enviar enlace de recuperación",
       })[mode];
