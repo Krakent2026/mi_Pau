@@ -72,7 +72,7 @@
       <button class="tab active" data-tab="dashboard">🏠 Inicio</button>
       <button class="tab" data-tab="materias">📖 Materias</button>
       <button class="tab" data-tab="planner">📅 Plan</button>
-      <button class="tab" data-tab="pomodoro">⏱️ Pomodoro</button>
+      <button class="tab" data-tab="pomodoro">⏱️ Tiempo</button>
       <button class="tab" data-tab="examenes">📝 Exámenes</button>
       <button class="tab" data-tab="flashcards">🃏 Flashcards</button>
       <button class="tab" data-tab="tests">✅ Tests</button>
@@ -160,25 +160,38 @@
         </div>
       </section>
 
-      <!-- ============== POMODORO ============== -->
+      <!-- ============== TIEMPO (Cronómetro / Temporizador) ============== -->
       <section id="tab-pomodoro" class="tab-panel">
         <div class="pomodoro-card">
-          <h3>⏱️ Pomodoro</h3>
-          <div class="pomo-timer" id="pomo-display">25:00</div>
-          <div class="pomo-mode" id="pomo-mode">Foco</div>
+          <h3>⏱️ Tiempo de estudio</h3>
+
+          <div class="pomo-tabs">
+            <button class="pomo-tab active" data-modo="cronometro">⏱️ Cronómetro</button>
+            <button class="pomo-tab" data-modo="temporizador">⏲️ Temporizador</button>
+          </div>
+
+          <div class="pomo-timer" id="pomo-display">00:00</div>
+          <div class="pomo-mode" id="pomo-mode">Cronómetro detenido</div>
 
           <label>Materia que estás estudiando
             <select id="pomo-materia"></select>
           </label>
 
+          <div id="pomo-temporizador-config" class="pomo-config" style="display:none">
+            <label>Duración (minutos)
+              <input type="number" id="pomo-duracion" min="1" max="240" value="25" step="1">
+            </label>
+          </div>
+
           <div class="pomo-controls">
             <button id="pomo-start" class="btn-primary">▶️ Iniciar</button>
-            <button id="pomo-pause" class="btn-ghost">⏸️ Pausa</button>
-            <button id="pomo-reset" class="btn-ghost">⟲ Reiniciar</button>
+            <button id="pomo-pause" class="btn-ghost" disabled>⏸️ Pausa</button>
+            <button id="pomo-stop" class="btn-ghost" disabled>⏹️ Stop</button>
           </div>
 
           <div class="pomo-cycles">
-            Ciclos completados hoy: <strong id="pomo-cycles">0</strong>
+            Sesiones completadas hoy: <strong id="pomo-cycles">0</strong> ·
+            Tiempo total hoy: <strong id="pomo-tiempo-hoy">0 min</strong>
           </div>
         </div>
 

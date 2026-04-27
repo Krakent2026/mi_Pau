@@ -440,9 +440,16 @@
     });
   }
 
-  // ---------------------- POMODORO ---------------------------
-  const POMO = { focus: 25 * 60, shortBreak: 5 * 60, longBreak: 15 * 60 };
-  let pomoState = { mode: "focus", remaining: POMO.focus, running: false, intervalId: null, cycles: 0 };
+  // ---------------------- TIEMPO DE ESTUDIO ----------------------
+  // Dos modos: cronómetro (sube) y temporizador (baja)
+  // Pausa: detiene sin contabilizar. Stop: registra sesión y resetea.
+  let pomoState = {
+    modo: "cronometro",      // "cronometro" | "temporizador"
+    elapsed: 0,               // segundos transcurridos (cronómetro y temporizador)
+    duracion: 25 * 60,        // segundos totales (solo temporizador)
+    running: false,
+    intervalId: null,
+  };
 
   function renderPomodoro() {
     // Materias dropdown
@@ -450,70 +457,146 @@
     const materias = getMateriasUsuario();
     sel.innerHTML = materias.map((m) => `<option value="${m.id}">${m.nombre}</option>`).join("");
 
-    updatePomoDisplay();
-    pomoState.cycles = state.sesiones.filter(
-      (s) => s.fecha === todayISO() && s.tipo === "pomodoro"
-    ).length;
-    $("#pomo-cycles").textContent = pomoState.cycles;
+    // Restaurar duración guardada
+    const dur = state.pomoDuracionMin || 25;
+    const inp = $("#pomo-duracion");
+    if (inp) inp.value = dur;
+    pomoState.duracion = dur * 60;
 
+    actualizarTabsModo();
+    updatePomoDisplay();
+    actualizarStatsHoy();
     renderSessions();
   }
 
+  function actualizarTabsModo() {
+    $$(".pomo-tab").forEach(t => t.classList.toggle("active", t.dataset.modo === pomoState.modo));
+    const cfg = $("#pomo-temporizador-config");
+    if (cfg) cfg.style.display = pomoState.modo === "temporizador" ? "" : "none";
+  }
+
+  function actualizarStatsHoy() {
+    const hoy = state.sesiones.filter(s => s.fecha === todayISO());
+    const cycles = hoy.length;
+    const total = hoy.reduce((acc, s) => acc + (s.minutos || 0), 0);
+    if ($("#pomo-cycles")) $("#pomo-cycles").textContent = cycles;
+    if ($("#pomo-tiempo-hoy")) $("#pomo-tiempo-hoy").textContent = total + " min";
+  }
+
   function updatePomoDisplay() {
-    const m = Math.floor(pomoState.remaining / 60);
-    const s = pomoState.remaining % 60;
+    let segundos;
+    let label;
+    if (pomoState.modo === "cronometro") {
+      segundos = pomoState.elapsed;
+      label = pomoState.running ? "⏱️ Cronómetro en marcha" : (pomoState.elapsed > 0 ? "⏸️ Pausado" : "Cronómetro detenido");
+    } else {
+      segundos = Math.max(0, pomoState.duracion - pomoState.elapsed);
+      label = pomoState.running ? "⏲️ Temporizador" : (pomoState.elapsed > 0 ? "⏸️ Pausado" : "Temporizador listo");
+    }
+    const m = Math.floor(segundos / 60);
+    const s = segundos % 60;
     $("#pomo-display").textContent = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-    $("#pomo-mode").textContent = pomoState.mode === "focus" ? "🎯 Foco" : "☕ Descanso";
+    $("#pomo-mode").textContent = label;
+    actualizarBotones();
+  }
+
+  function actualizarBotones() {
+    const start = $("#pomo-start"); const pause = $("#pomo-pause"); const stop = $("#pomo-stop");
+    if (!start) return;
+    if (pomoState.running) {
+      start.disabled = true;  pause.disabled = false; stop.disabled = false;
+      start.textContent = "▶️ Iniciar";
+    } else if (pomoState.elapsed > 0) {
+      start.disabled = false; pause.disabled = true;  stop.disabled = false;
+      start.textContent = "▶️ Reanudar";
+    } else {
+      start.disabled = false; pause.disabled = true;  stop.disabled = true;
+      start.textContent = "▶️ Iniciar";
+    }
   }
 
   function pomoTick() {
-    pomoState.remaining--;
-    if (pomoState.remaining <= 0) {
-      clearInterval(pomoState.intervalId);
-      pomoState.running = false;
-      if (pomoState.mode === "focus") {
-        // Registrar sesión
-        const materiaId = $("#pomo-materia").value;
-        state.sesiones.push({
-          fecha: todayISO(),
-          materiaId,
-          minutos: 25,
-          tipo: "pomodoro",
-        });
-        save();
-        actualizarRacha();
-        pomoState.cycles++;
-        $("#pomo-cycles").textContent = pomoState.cycles;
-        renderSessions();
-        renderDashboard();
-        notify("¡Pomodoro completado! 🎉", "Tómate 5 minutos de descanso.");
-        pomoState.mode = "break";
-        pomoState.remaining = POMO.shortBreak;
-      } else {
-        notify("Descanso terminado", "¿Listo para otro pomodoro?");
-        pomoState.mode = "focus";
-        pomoState.remaining = POMO.focus;
-      }
+    pomoState.elapsed++;
+    if (pomoState.modo === "temporizador" && pomoState.elapsed >= pomoState.duracion) {
+      // Temporizador terminado: registrar y notificar
+      registrarSesion();
+      notify("¡Tiempo completado! 🎉", "Sesión registrada. Buen trabajo.");
+      resetPomo();
+      return;
     }
     updatePomoDisplay();
   }
 
+  function registrarSesion() {
+    const minutos = Math.round(pomoState.elapsed / 60);
+    if (minutos < 1) return; // no contabilizar menos de 1 minuto
+    const materiaId = $("#pomo-materia").value;
+    state.sesiones.push({
+      fecha: todayISO(),
+      materiaId,
+      minutos,
+      tipo: pomoState.modo,
+    });
+    save();
+    actualizarRacha();
+    actualizarStatsHoy();
+    renderSessions();
+    if (typeof renderDashboard === "function") renderDashboard();
+  }
+
+  function resetPomo() {
+    clearInterval(pomoState.intervalId);
+    pomoState.running = false;
+    pomoState.elapsed = 0;
+    updatePomoDisplay();
+  }
+
   function setupPomodoroControls() {
+    // Tabs cronómetro/temporizador
+    $$(".pomo-tab").forEach(t => t.addEventListener("click", () => {
+      if (pomoState.running || pomoState.elapsed > 0) {
+        if (!confirm("Hay una sesión en curso. ¿Quieres descartarla y cambiar de modo?")) return;
+      }
+      resetPomo();
+      pomoState.modo = t.dataset.modo;
+      actualizarTabsModo();
+      updatePomoDisplay();
+    }));
+
+    // Configurar duración del temporizador
+    const inp = $("#pomo-duracion");
+    if (inp) inp.addEventListener("change", () => {
+      const v = Math.max(1, Math.min(240, parseInt(inp.value) || 25));
+      inp.value = v;
+      state.pomoDuracionMin = v;
+      pomoState.duracion = v * 60;
+      save();
+      if (!pomoState.running && pomoState.elapsed === 0) updatePomoDisplay();
+    });
+
+    // Iniciar / Reanudar
     $("#pomo-start").addEventListener("click", () => {
       if (pomoState.running) return;
       pomoState.running = true;
       pomoState.intervalId = setInterval(pomoTick, 1000);
-    });
-    $("#pomo-pause").addEventListener("click", () => {
-      pomoState.running = false;
-      clearInterval(pomoState.intervalId);
-    });
-    $("#pomo-reset").addEventListener("click", () => {
-      pomoState.running = false;
-      clearInterval(pomoState.intervalId);
-      pomoState.mode = "focus";
-      pomoState.remaining = POMO.focus;
       updatePomoDisplay();
+    });
+
+    // Pausa (mantiene el tiempo, no registra)
+    $("#pomo-pause").addEventListener("click", () => {
+      if (!pomoState.running) return;
+      pomoState.running = false;
+      clearInterval(pomoState.intervalId);
+      updatePomoDisplay();
+    });
+
+    // Stop (registra la sesión y resetea)
+    $("#pomo-stop").addEventListener("click", () => {
+      if (pomoState.elapsed === 0) return;
+      clearInterval(pomoState.intervalId);
+      pomoState.running = false;
+      registrarSesion();
+      resetPomo();
     });
   }
 
@@ -521,7 +604,7 @@
     const ul = $("#sessions-list");
     const last = [...state.sesiones].slice(-15).reverse();
     if (!last.length) {
-      ul.innerHTML = `<li class="muted">Aún no has registrado ninguna sesión. ¡Inicia tu primer Pomodoro! 🍅</li>`;
+      ul.innerHTML = `<li class="muted">Aún no has registrado ninguna sesión. ¡Inicia tu primera sesión de estudio! ⏱️</li>`;
       return;
     }
     ul.innerHTML = last

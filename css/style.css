@@ -222,6 +222,19 @@ main { flex: 1; padding: 20px; max-width: 1100px; margin: 0 auto; width: 100%; }
   background: var(--bg-card); border-radius: var(--radius); padding: 32px;
   text-align: center; box-shadow: var(--shadow); margin-bottom: 16px;
 }
+.pomo-tabs { display:flex; gap:6px; justify-content:center; margin-bottom:8px; flex-wrap:wrap; }
+.pomo-tab {
+  padding: 8px 16px; border: 1px solid var(--border); background: transparent;
+  border-radius: 8px; cursor: pointer; color: var(--text); font-size: 0.9rem;
+  transition: all 0.2s;
+}
+.pomo-tab:hover { background: var(--bg); }
+.pomo-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
+.pomo-config { margin: 12px 0; }
+.pomo-config input[type="number"] {
+  width: 100px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border);
+  text-align: center; font-size: 1rem;
+}
 .pomo-timer {
   font-size: 5rem; font-weight: 700; color: var(--primary);
   font-variant-numeric: tabular-nums; margin: 16px 0;
@@ -229,6 +242,7 @@ main { flex: 1; padding: 20px; max-width: 1100px; margin: 0 auto; width: 100%; }
 .pomo-mode { font-size: 1rem; color: var(--text-muted); margin-bottom: 20px; }
 .pomo-controls { display: flex; gap: 8px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
 .pomo-controls .btn-primary { width: auto; }
+.pomo-controls button:disabled { opacity: 0.4; cursor: not-allowed; }
 .pomo-cycles { font-size: 0.9rem; color: var(--text-muted); }
 
 #sessions-list li {
@@ -388,7 +402,7 @@ details.info a { color: var(--primary); }
 }
 
 /* ===========================================================
-   Fase 3 — Análisis, logros, grados, bienestar
+   Fase 3 ï¿½ Anï¿½lisis, logros, grados, bienestar
    =========================================================== */
 
 /* Acciones del planificador */
@@ -399,7 +413,7 @@ details.info a { color: var(--primary); }
   margin-bottom: 12px;
 }
 
-/* Análisis: prioridades */
+/* Anï¿½lisis: prioridades */
 .prioridad-item {
   display: flex;
   align-items: center;
@@ -419,7 +433,7 @@ details.info a { color: var(--primary); }
 }
 .prio-info { flex: 1; }
 
-/* Tabla de análisis */
+/* Tabla de anï¿½lisis */
 .analisis-header,
 .analisis-row {
   display: grid;
@@ -568,7 +582,7 @@ details.info a { color: var(--primary); }
 }
 
 /* ===========================================================
-   Fase 4 — Tutor IA
+   Fase 4 ï¿½ Tutor IA
    =========================================================== */
 .ia-status {
   display: flex;
@@ -645,7 +659,7 @@ details.info a { color: var(--primary); }
 }
 .ia-chat-input button { white-space: nowrap; }
 
-/* Salida genérica IA */
+/* Salida genï¿½rica IA */
 .ia-output {
   margin-top: 12px;
   padding: 12px;
@@ -791,7 +805,7 @@ details.info a { color: var(--primary); }
 }
 
 /* ===========================================================
-   Fase 5 — Simulacro / Foco / Repaso / Voz / Banco
+   Fase 5 ï¿½ Simulacro / Foco / Repaso / Voz / Banco
    =========================================================== */
 
 /* Simulacro */
@@ -804,7 +818,7 @@ details.info a { color: var(--primary); }
 #simu-notas { width: 100%; min-height: 120px; margin: 10px 0; }
 #simu-chart { width: 100%; max-width: 100%; }
 
-/* Modo concentración */
+/* Modo concentraciï¿½n */
 body.focus-mode .topbar,
 body.focus-mode .tabs,
 body.focus-mode footer,
@@ -831,7 +845,7 @@ body.focus-mode .simu-time { color: #fbbf24 !important; }
 .banco-mat { padding: 6px 0; border-bottom: 1px solid var(--border); }
 .banco-mat label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
 
-/* Importador exámenes */
+/* Importador exï¿½menes */
 #imp-ex-texto { width: 100%; margin-top: 8px; font-family: monospace; font-size: 0.85rem; }
 #imp-ex-status { min-height: 1.4em; margin: 8px 0; }
 
