@@ -119,7 +119,7 @@
           }
           await auth.loginEmail(email, password);
           msg.textContent = "✓ Bienvenido"; msg.className = "auth-msg ok";
-          setTimeout(() => div.remove(), 400);
+          // Let onChange handler remove div after successful login
         } else if (mode === "signup") {
           if (!email || !password) {
             throw new Error("Introduce email y contraseña");
@@ -391,3 +391,4 @@
 
   window.PAU_AUTH_UI = { abrirModalCuenta, abrirModalUpgrade, mostrarLogin };
 })();
+
