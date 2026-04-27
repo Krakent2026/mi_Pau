@@ -127,8 +127,13 @@
 
   async function actualizarPerfil(parches) {
     if (!state.user) throw new Error("no auth");
+    // upsert: si la fila no existe (p.ej. registro previo al trigger), la crea
+    const fila = { id: state.user.id, ...parches };
     const { data, error } = await client
-      .from("profiles").update(parches).eq("id", state.user.id).select().single();
+      .from("profiles")
+      .upsert(fila, { onConflict: "id" })
+      .select()
+      .single();
     if (error) throw error;
     state.profile = data;
     notify();
