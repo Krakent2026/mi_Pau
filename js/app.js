@@ -67,6 +67,11 @@
 
   function save() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    // Notificar al módulo de sync con la nube para que suba los cambios
+    if (window.PAU_SYNC_CLOUD && window.PAU_SYNC_CLOUD.estado && window.PAU_SYNC_CLOUD.estado.activo) {
+      try { window.PAU_SYNC_CLOUD.notificarCambio && window.PAU_SYNC_CLOUD.notificarCambio(); }
+      catch (e) { console.warn("[APP] notificar sync:", e); }
+    }
   }
 
   // Exponer al módulo de sync con la nube (sync.js)

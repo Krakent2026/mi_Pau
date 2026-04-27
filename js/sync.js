@@ -100,7 +100,7 @@
     }
   }
 
-  function agendarSubida(ms = 5000) {
+  function agendarSubida(ms = 2000) {
     clearTimeout(timerSubida);
     timerSubida = setTimeout(subirEstado, ms);
   }
@@ -179,6 +179,7 @@
     iniciar, parar,
     forzarSubida: subirEstado,
     forzarBajada: bajarEstado,
+    notificarCambio: () => agendarSubida(),
     estado,
   };
 })();
