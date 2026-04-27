@@ -136,12 +136,12 @@
           msg.textContent = "✓ Te hemos enviado un email para recuperar la contraseña";
           msg.className = "auth-msg ok";
         }
-      } catch (err) { console.group("[UI-AUTH] ERROR"); console.error("Raw error:", err); console.error("message:", err?.message); console.error("error_description:", err?.error_description); console.groupEnd();
-        const raw = err.message || err.error_description || "Error inesperado";
+      } catch (err) {
+        console.error("[UI-AUTH] login error:", err);
+        const raw = (err && (err.message || err.error_description)) || "Error inesperado";
         const traducido = traducirErrorAuth(raw);
         msg.textContent = "✗ " + traducido;
         msg.className = "auth-msg err";
-        console.error("[UI-AUTH] login error:", err);
       } finally {
         if (submitBtn) submitBtn.disabled = false;
       }
