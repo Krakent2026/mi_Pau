@@ -2762,15 +2762,19 @@
     // Reaccionar a cambios de autenticación
     if (PAU_AUTH.onChange) {
       PAU_AUTH.onChange((auth_state) => {
-        if (auth_state.user && !document.getElementById("app").classList.contains("hidden")) {
-          // Usuario acaba de autenticarse
-          renderApp();
+        if (auth_state.user) {
+          // Usuario acaba de autenticarse: ocultar onboarding/login y mostrar la app
+          if ($("#app").classList.contains("hidden")) {
+            showApp();
+          }
           if (window.PAU_SYNC && window.PAU_SYNC.iniciar) {
             window.PAU_SYNC.iniciar();
           }
-        } else if (!auth_state.user && !document.getElementById("onboarding").classList.contains("hidden")) {
-          // Usuario cerró sesión
-          showOnboarding();
+        } else if (auth_state.ready && !auth_state.user) {
+          // Usuario cerró sesión: volver al onboarding/login
+          if (!$("#app").classList.contains("hidden")) {
+            showOnboarding();
+          }
         }
       });
     }
@@ -2853,12 +2857,27 @@
   }
 
   function showApp() {
+    // Si hay usuario autenticado pero no perfil completo, ir al onboarding
+    const tienePerfilCompleto = state.perfil && state.perfil.modalidad && state.perfil.convocatoria;
+    if (window.PAU_AUTH && window.PAU_AUTH.user && !tienePerfilCompleto) {
+      // Pre-rellenar nombre antes de mostrar onboarding
+      const nombrePre = window.PAU_AUTH.profile?.nombre || window.PAU_AUTH.user.email.split("@")[0] || "";
+      $("#onboarding").classList.remove("hidden");
+      $("#app").classList.add("hidden");
+      renderOnboarding();
+      const nombreInput = $("#ob-nombre");
+      if (nombreInput && !nombreInput.value) nombreInput.value = nombrePre;
+      return;
+    }
+
     $("#onboarding").classList.add("hidden");
     $("#app").classList.remove("hidden");
-    // Cargar nombre del usuario si hay sesión
+    // Sincronizar nombre con el perfil de auth
     if (window.PAU_AUTH && window.PAU_AUTH.user) {
       state.perfil = state.perfil || {};
-      state.perfil.nombre = window.PAU_AUTH.profile?.nombre || window.PAU_AUTH.user.email.split("@")[0] || "Estudiante";
+      if (!state.perfil.nombre) {
+        state.perfil.nombre = window.PAU_AUTH.profile?.nombre || window.PAU_AUTH.user.email.split("@")[0] || "Estudiante";
+      }
       save();
     }
     bootApp();

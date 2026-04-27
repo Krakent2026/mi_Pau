@@ -14,6 +14,23 @@
   const auth = window.PAU_AUTH;
   if (!auth) return;
 
+  // ---------- Traducción de errores comunes de Supabase ----------
+  function traducirErrorAuth(msg) {
+    if (!msg) return "Error desconocido";
+    const m = String(msg).toLowerCase();
+    if (m.includes("invalid login credentials")) return "Email o contraseña incorrectos";
+    if (m.includes("email not confirmed")) return "Confirma tu email antes de iniciar sesión (revisa tu bandeja)";
+    if (m.includes("user already registered")) return "Ya existe una cuenta con ese email — usa 'Entrar' o 'Recuperar'";
+    if (m.includes("password should be at least")) return "La contraseña debe tener al menos 8 caracteres";
+    if (m.includes("rate limit") || m.includes("too many requests") || m.includes("over_email_send_rate_limit")) return "Demasiados intentos. Espera unos minutos antes de reintentar";
+    if (m.includes("for security purposes")) return "Por seguridad, espera unos segundos antes de reintentar";
+    if (m.includes("invalid email")) return "El email no es válido";
+    if (m.includes("network") || m.includes("fetch")) return "Sin conexión con el servidor — comprueba tu internet";
+    if (m.includes("user not found")) return "No existe una cuenta con ese email";
+    if (m.includes("signups not allowed")) return "El registro está desactivado en este momento";
+    return msg;
+  }
+
   // ---------- Pantalla de login completa ----------
   function mostrarLogin() {
     if (document.getElementById("auth-screen")) return;
@@ -89,26 +106,44 @@
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const fd = new FormData(form);
-      const email = fd.get("email"); const password = fd.get("password");
-      const nombre = fd.get("nombre");
+      const email = (fd.get("email") || "").trim();
+      const password = fd.get("password") || "";
+      const nombre = (fd.get("nombre") || "").trim();
       msg.textContent = "Procesando..."; msg.className = "auth-msg";
+      const submitBtn = div.querySelector(".auth-submit");
+      if (submitBtn) submitBtn.disabled = true;
       try {
         if (mode === "login") {
+          if (!email || !password) {
+            throw new Error("Introduce email y contraseña");
+          }
           await auth.loginEmail(email, password);
           msg.textContent = "✓ Bienvenido"; msg.className = "auth-msg ok";
           setTimeout(() => div.remove(), 400);
         } else if (mode === "signup") {
+          if (!email || !password) {
+            throw new Error("Introduce email y contraseña");
+          }
+          if (password.length < 8) {
+            throw new Error("La contraseña debe tener al menos 8 caracteres");
+          }
           await auth.registrar(email, password, nombre);
           msg.textContent = "✓ Revisa tu email para confirmar la cuenta";
           msg.className = "auth-msg ok";
         } else {
+          if (!email) throw new Error("Introduce tu email");
           await auth.recuperar(email);
           msg.textContent = "✓ Te hemos enviado un email para recuperar la contraseña";
           msg.className = "auth-msg ok";
         }
       } catch (err) {
-        msg.textContent = "✗ " + (err.message || "Error inesperado");
+        const raw = err.message || err.error_description || "Error inesperado";
+        const traducido = traducirErrorAuth(raw);
+        msg.textContent = "✗ " + traducido;
         msg.className = "auth-msg err";
+        console.error("[UI-AUTH] login error:", err);
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
       }
     });
 
