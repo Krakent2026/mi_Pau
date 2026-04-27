@@ -2766,6 +2766,7 @@
   function showOnboarding() {
     $("#onboarding").classList.remove("hidden");
     $("#app").classList.add("hidden");
+    renderOnboarding();
   }
 
   function showApp() {

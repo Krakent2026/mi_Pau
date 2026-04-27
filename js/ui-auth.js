@@ -332,7 +332,7 @@
   }
 
   // ---------- Inicialización ----------
-  if (cfg.MODO !== "producto") {
+  if (cfg.MODO !== "producto" && cfg.MODO !== "personal") {
     window.PAU_AUTH_UI = { abrirModalCuenta, abrirModalUpgrade };
     return;
   }
