@@ -110,6 +110,7 @@
       const password = fd.get("password") || "";
       const nombre = (fd.get("nombre") || "").trim();
       msg.textContent = "Procesando..."; msg.className = "auth-msg";
+      msg.style.color = ""; msg.style.fontWeight = "";
       const submitBtn = div.querySelector(".auth-submit");
       if (submitBtn) submitBtn.disabled = true;
       try {
@@ -117,9 +118,14 @@
           if (!email || !password) {
             throw new Error("Introduce email y contraseña");
           }
-          await auth.loginEmail(email, password);
-          msg.textContent = "✓ Bienvenido"; msg.className = "auth-msg ok";
-          // Let onChange handler remove div after successful login
+          console.log("[UI-AUTH] Iniciando login para:", email);
+          const result = await auth.loginEmail(email, password);
+          console.log("[UI-AUTH] Login OK:", result?.user?.email);
+          msg.textContent = "✓ Bienvenido, recargando..."; msg.className = "auth-msg ok";
+          // Recarga forzada: garantiza que la app arranca con sesión activa
+          // y evita problemas de listeners que no se disparan a tiempo.
+          setTimeout(() => { window.location.reload(); }, 300);
+          return;
         } else if (mode === "signup") {
           if (!email || !password) {
             throw new Error("Introduce email y contraseña");
@@ -140,8 +146,18 @@
         console.error("[UI-AUTH] login error:", err);
         const raw = (err && (err.message || err.error_description)) || "Error inesperado";
         const traducido = traducirErrorAuth(raw);
-        msg.textContent = "✗ " + traducido;
-        msg.className = "auth-msg err";
+        // Localizamos siempre el msg actual (por si el DOM ha cambiado)
+        const msgEl = div.querySelector("#auth-msg") || msg;
+        if (msgEl) {
+          msgEl.textContent = "✗ " + traducido;
+          msgEl.className = "auth-msg err";
+          // Forzar repaint para asegurar visibilidad
+          msgEl.style.color = "#dc2626";
+          msgEl.style.fontWeight = "600";
+        } else {
+          // Fallback: alert si por algún motivo no encontramos el msg
+          alert("Error: " + traducido);
+        }
       } finally {
         if (submitBtn) submitBtn.disabled = false;
       }

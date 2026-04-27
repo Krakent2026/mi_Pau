@@ -1,7 +1,7 @@
 /* Service Worker — Mi PAU 2026
- * Estrategia: cache-first para shell, network-first para CDN.
+ * Estrategia: network-first para JS/HTML/CSS, cache-first para CDN.
  */
-const VERSION = "v2.0.0-personal";
+const VERSION = "v2.0.2-auth-fix";
 const CACHE = `pau-shell-${VERSION}`;
 
 const SHELL = [
@@ -59,14 +59,14 @@ self.addEventListener("fetch", (e) => {
     return;
   }
 
-  // App shell → cache-first
+  // App shell → network-first (para que cambios de JS/HTML/CSS se vean al instante)
   e.respondWith(
-    caches.match(e.request).then((hit) => hit || fetch(e.request).then((r) => {
+    fetch(e.request).then((r) => {
       if (r.ok && url.origin === location.origin) {
         const clone = r.clone();
         caches.open(CACHE).then((c) => c.put(e.request, clone));
       }
       return r;
-    }).catch(() => caches.match("./index.html")))
+    }).catch(() => caches.match(e.request).then((hit) => hit || caches.match("./index.html")))
   );
 });
