@@ -2721,7 +2721,14 @@
     }
 
     // Esperar a que se cargue la sesión
-    await PAU_AUTH.init();
+    try {
+      await PAU_AUTH.init();
+    } catch (e) {
+      console.warn("[APP] Error en auth.init:", e);
+      // Mostrar onboarding si auth falla
+      showOnboarding();
+      return;
+    }
 
     // Si hay usuario autenticado, cargar su estado desde la nube
     if (PAU_AUTH.user) {

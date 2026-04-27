@@ -341,13 +341,18 @@
     if (!auth.user) mostrarLogin();
     else ocultarLogin();
     pintarBotonUsuario();
+  }).catch((e) => {
+    console.warn("[UI-AUTH] Error en init, mostrando login:", e);
+    mostrarLogin();
   });
 
-  auth.onChange((s) => {
-    if (s.ready && !s.user) mostrarLogin();
-    else if (s.user) ocultarLogin();
-    pintarBotonUsuario();
-  });
+  if (auth.onChange) {
+    auth.onChange((s) => {
+      if (s.ready && !s.user) mostrarLogin();
+      else if (s.user) ocultarLogin();
+      pintarBotonUsuario();
+    });
+  }
 
   window.PAU_AUTH_UI = { abrirModalCuenta, abrirModalUpgrade, mostrarLogin };
 })();

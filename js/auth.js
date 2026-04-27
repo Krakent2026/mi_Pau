@@ -54,17 +54,27 @@
   function notify() { listeners.forEach(cb => { try { cb(state); } catch(_){} }); }
 
   async function init() {
-    const { data } = await client.auth.getSession();
-    state.user = data.session?.user || null;
-    state.profile = state.user ? await cargarPerfil(state.user.id) : null;
+    try {
+      const { data } = await client.auth.getSession();
+      state.user = data.session?.user || null;
+      state.profile = state.user ? await cargarPerfil(state.user.id) : null;
+    } catch (e) {
+      console.warn("[PAU_AUTH] Error al inicializar sesión:", e.message || e);
+      state.user = null;
+      state.profile = null;
+    }
     state.ready = true;
     notify();
 
-    client.auth.onAuthStateChange(async (event, session) => {
-      state.user = session?.user || null;
-      state.profile = state.user ? await cargarPerfil(state.user.id) : null;
-      notify();
-    });
+    try {
+      client.auth.onAuthStateChange(async (event, session) => {
+        state.user = session?.user || null;
+        state.profile = state.user ? await cargarPerfil(state.user.id) : null;
+        notify();
+      });
+    } catch (e) {
+      console.warn("[PAU_AUTH] Error en onAuthStateChange:", e.message || e);
+    }
     return !!state.user;
   }
 
