@@ -911,15 +911,38 @@ details.info a { color: var(--primary); }
 #simu-notas { width: 100%; min-height: 120px; margin: 10px 0; }
 #simu-chart { width: 100%; max-width: 100%; }
 
-/* Modo concentraci�n */
+/* Modo concentración */
 body.focus-mode .topbar,
 body.focus-mode .tabs,
-body.focus-mode footer,
-body.focus-mode .card:not(:has(#simu-time)):not(.pomo-card):not(.fc-card) { display: none !important; }
+body.focus-mode footer { display: none !important; }
 body.focus-mode { background: #0f172a !important; color: #f1f5f9 !important; }
-body.focus-mode main { padding: 40px 20px !important; max-width: 800px; margin: 0 auto; }
-body.focus-mode .card { background: #1e293b !important; border: 1px solid #334155 !important; }
-body.focus-mode .simu-time { color: #fbbf24 !important; }
+body.focus-mode main { padding: 40px 20px !important; max-width: 900px; margin: 0 auto; }
+body.focus-mode .card,
+body.focus-mode .pomodoro-card,
+body.focus-mode .quote-card,
+body.focus-mode .countdown-card {
+  background: #1e293b !important;
+  border: 1px solid #334155 !important;
+  color: #f1f5f9 !important;
+}
+body.focus-mode .muted { color: #94a3b8 !important; }
+body.focus-mode .simu-time,
+body.focus-mode #pomo-display { color: #fbbf24 !important; }
+/* Botón flotante para salir del modo concentración */
+.focus-exit-btn {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  background: rgba(255,255,255,0.12);
+  color: #f1f5f9;
+  border: 1px solid rgba(255,255,255,0.2);
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  z-index: 10000;
+}
+.focus-exit-btn:hover { background: rgba(255,255,255,0.2); }
 
 /* Repaso inteligente */
 .repaso-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--bg); border-radius: 10px; border-left: 4px solid var(--border); margin-bottom: 6px; }

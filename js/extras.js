@@ -205,6 +205,15 @@
     activar() {
       document.body.classList.add("focus-mode");
       this.activo = true;
+      // Botón flotante para salir
+      if (!document.getElementById("focus-exit")) {
+        const btn = document.createElement("button");
+        btn.id = "focus-exit";
+        btn.className = "focus-exit-btn";
+        btn.textContent = "✕ Salir (Esc)";
+        btn.addEventListener("click", () => this.desactivar());
+        document.body.appendChild(btn);
+      }
       if (document.documentElement.requestFullscreen) {
         document.documentElement.requestFullscreen().catch(() => {});
       }
@@ -212,6 +221,8 @@
     desactivar() {
       document.body.classList.remove("focus-mode");
       this.activo = false;
+      const btn = document.getElementById("focus-exit");
+      if (btn) btn.remove();
       if (document.exitFullscreen && document.fullscreenElement) {
         document.exitFullscreen().catch(() => {});
       }
