@@ -134,8 +134,8 @@ begin
     raise exception 'No autenticado';
   end if;
   select email into email_user from auth.users where id = uid;
-  insert into public.profiles (id, nombre)
-    values (uid, split_part(coalesce(email_user, ''), '@', 1))
+  insert into public.profiles (id, email, nombre)
+    values (uid, email_user, split_part(coalesce(email_user, ''), '@', 1))
     on conflict (id) do nothing;
   select * into fila from public.profiles where id = uid;
   return fila;
@@ -146,8 +146,8 @@ grant execute on function public.ensure_my_profile() to authenticated;
 
 -- 7) Backfill: crear perfil a TODOS los usuarios huérfanos (registrados antes del trigger)
 --    Ejecuta una sola vez al actualizar el schema.
-insert into public.profiles (id, nombre)
-select u.id, coalesce(u.raw_user_meta_data->>'nombre', split_part(u.email, '@', 1))
+insert into public.profiles (id, email, nombre)
+select u.id, u.email, coalesce(u.raw_user_meta_data->>'nombre', split_part(u.email, '@', 1))
 from auth.users u
 left join public.profiles p on p.id = u.id
 where p.id is null;
