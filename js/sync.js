@@ -183,6 +183,22 @@
 
   async function iniciar() {
     if (estado.activo) return;
+    // Si el usuario logueado es distinto al de la sesión anterior, limpia
+    // el localStorage para que no se mezclen datos de cuentas diferentes.
+    try {
+      const u = window.PAU_AUTH.user;
+      if (u) {
+        const LAST_USER = "pau-last-user-id";
+        const prev = localStorage.getItem(LAST_USER);
+        if (prev && prev !== u.id) {
+          console.log("[SYNC] Cambio de usuario detectado, limpiando estado local");
+          localStorage.removeItem(STATE_KEY);
+          localStorage.removeItem("pauMurciaIA");
+          if (typeof window.load === "function") window.load();
+        }
+        localStorage.setItem(LAST_USER, u.id);
+      }
+    } catch (e) { console.warn("[SYNC] guardia usuario:", e); }
     estado.activo = true;
     instrumentarSave();
     await bajarEstado();
@@ -196,6 +212,13 @@
     canal = null;
     clearTimeout(timerSubida);
     clearInterval(pollTimer);
+    // Al cerrar sesión, limpiamos el estado local para que el siguiente
+    // usuario que entre en este dispositivo arranque limpio.
+    try {
+      localStorage.removeItem(STATE_KEY);
+      localStorage.removeItem("pauMurciaIA");
+      localStorage.removeItem("pau-last-user-id");
+    } catch (_) {}
     emitirEvento();
   }
 

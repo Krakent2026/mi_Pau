@@ -198,7 +198,10 @@
 
   // ---------------------- DASHBOARD --------------------------
   function renderDashboard() {
-    $("#user-greeting").textContent = `Hola, ${state.perfil.nombre} 👋`;
+    // Prioriza el nombre del perfil de auth (cuenta actual) sobre el cache local
+    const nombreAuth = window.PAU_AUTH?.profile?.nombre;
+    const nombre = nombreAuth || state.perfil?.nombre || "Estudiante";
+    $("#user-greeting").textContent = `Hola, ${nombre} 👋`;
 
     // Cuenta atrás
     const conv = D.convocatorias[state.perfil.convocatoria];
