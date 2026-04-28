@@ -127,11 +127,22 @@
 
   async function actualizarPerfil(parches) {
     if (!state.user) throw new Error("no auth");
-    // upsert: si la fila no existe (p.ej. registro previo al trigger), la crea
-    const fila = { id: state.user.id, ...parches };
+    // 1) Garantiza que existe la fila (RPC security definer, evita problemas de RLS)
+    try {
+      const { data: fila, error: errEnsure } = await client.rpc("ensure_my_profile");
+      if (errEnsure) {
+        console.warn("[PAU_AUTH] ensure_my_profile:", errEnsure.message);
+      } else if (fila) {
+        state.profile = fila;
+      }
+    } catch (e) {
+      console.warn("[PAU_AUTH] ensure_my_profile excepción:", e);
+    }
+    // 2) UPDATE normal (la fila ya existe)
     const { data, error } = await client
       .from("profiles")
-      .upsert(fila, { onConflict: "id" })
+      .update(parches)
+      .eq("id", state.user.id)
       .select()
       .single();
     if (error) throw error;

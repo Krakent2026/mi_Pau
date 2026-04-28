@@ -117,6 +117,41 @@ $$;
 revoke all on function public.admin_listar_usuarios() from public;
 grant execute on function public.admin_listar_usuarios() to authenticated;
 
+-- 6) Garantizar que el usuario actual tiene fila en profiles (auto-reparación)
+--    Útil para usuarios registrados antes de que existiera el trigger.
+create or replace function public.ensure_my_profile()
+returns public.profiles
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+  uid uuid := auth.uid();
+  email_user text;
+  fila public.profiles;
+begin
+  if uid is null then
+    raise exception 'No autenticado';
+  end if;
+  select email into email_user from auth.users where id = uid;
+  insert into public.profiles (id, nombre)
+    values (uid, split_part(coalesce(email_user, ''), '@', 1))
+    on conflict (id) do nothing;
+  select * into fila from public.profiles where id = uid;
+  return fila;
+end;
+$$;
+revoke all on function public.ensure_my_profile() from public;
+grant execute on function public.ensure_my_profile() to authenticated;
+
+-- 7) Backfill: crear perfil a TODOS los usuarios huérfanos (registrados antes del trigger)
+--    Ejecuta una sola vez al actualizar el schema.
+insert into public.profiles (id, nombre)
+select u.id, coalesce(u.raw_user_meta_data->>'nombre', split_part(u.email, '@', 1))
+from auth.users u
+left join public.profiles p on p.id = u.id
+where p.id is null;
+
 -- =============================================================
 -- INSTRUCCIONES
 -- =============================================================

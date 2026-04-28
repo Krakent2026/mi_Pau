@@ -1,7 +1,7 @@
 /* Service Worker — Mi PAU 2026
  * Estrategia: network-first para JS/HTML/CSS, cache-first para CDN.
  */
-const VERSION = "v2.1.2-upsert";
+const VERSION = "v2.1.3-ensure-profile";
 const CACHE = `pau-shell-${VERSION}`;
 
 const SHELL = [
